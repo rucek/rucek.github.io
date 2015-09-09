@@ -4,13 +4,79 @@
   <title><![CDATA[My Octopress Blog]]></title>
   <link href="http://rucek.github.io/atom.xml" rel="self"/>
   <link href="http://rucek.github.io/"/>
-  <updated>2014-11-11T15:21:40+01:00</updated>
+  <updated>2015-09-09T14:39:52+02:00</updated>
   <id>http://rucek.github.io/</id>
   <author>
-    <name><![CDATA[Your Name]]></name>
+    <name><![CDATA[Jacek Kunicki]]></name>
     
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Octopress Test]]></title>
+    <link href="http://rucek.github.io/blog/2014/11/11/test/"/>
+    <updated>2014-11-11T15:31:30+01:00</updated>
+    <id>http://rucek.github.io/blog/2014/11/11/test</id>
+    <content type="html"><![CDATA[<p>Sample code</p>
+
+<figure class='code'><figcaption><span>Rule engine specification mark:21-24</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">class</span> <span class="nc">RuleRunnerSpec</span> <span class="k">extends</span> <span class="nc">FlatSpec</span> <span class="k">with</span> <span class="nc">ShouldMatchers</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">it</span> <span class="n">should</span> <span class="s">&quot;run rules&quot;</span> <span class="n">in</span> <span class="o">{</span>
+</span><span class='line'>    <span class="c1">// given</span>
+</span><span class='line'>    <span class="k">val</span> <span class="n">facts</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span>
+</span><span class='line'>      <span class="nc">Temperature</span><span class="o">(</span><span class="mi">10</span><span class="o">),</span>
+</span><span class='line'>      <span class="nc">Temperature</span><span class="o">(</span><span class="mi">50</span><span class="o">),</span>
+</span><span class='line'>      <span class="nc">Temperature</span><span class="o">(</span><span class="mi">100</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">val</span> <span class="n">session</span> <span class="k">=</span> <span class="nc">RuleRunner</span><span class="o">.</span><span class="n">createKnowledgeSession</span><span class="o">(</span><span class="s">&quot;WeatherRules.drl&quot;</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// when</span>
+</span><span class='line'>    <span class="n">facts</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">session</span><span class="o">.</span><span class="n">insert</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">session</span><span class="o">.</span><span class="n">fireAllRules</span>
+</span><span class='line'>    <span class="k">val</span> <span class="n">objects</span> <span class="k">=</span> <span class="n">session</span><span class="o">.</span><span class="n">getObjects</span>
+</span><span class='line'>    <span class="k">val</span> <span class="n">tooHighs</span> <span class="k">=</span> <span class="n">objects</span> <span class="n">collect</span> <span class="o">{</span> <span class="k">case</span> <span class="n">o</span><span class="k">:</span> <span class="kt">TooHigh</span> <span class="o">=&gt;</span> <span class="n">o</span> <span class="o">}</span>
+</span><span class='line'>    <span class="k">val</span> <span class="n">tooLows</span> <span class="k">=</span> <span class="n">objects</span> <span class="n">collect</span> <span class="o">{</span> <span class="k">case</span> <span class="n">o</span><span class="k">:</span> <span class="kt">TooLow</span> <span class="o">=&gt;</span> <span class="n">o</span> <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// then</span>
+</span><span class='line'>    <span class="n">tooLows</span> <span class="n">should</span> <span class="n">have</span> <span class="n">size</span> <span class="mi">1</span>
+</span><span class='line'>    <span class="n">tooLows</span> <span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">temperature</span><span class="o">)</span> <span class="n">should</span> <span class="n">contain</span><span class="o">(</span><span class="n">facts</span><span class="o">(</span><span class="mi">0</span><span class="o">))</span>
+</span><span class='line'>    <span class="n">tooHighs</span> <span class="n">should</span> <span class="n">have</span> <span class="n">size</span> <span class="mi">1</span>
+</span><span class='line'>    <span class="n">tooHighs</span> <span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">temperature</span><span class="o">)</span> <span class="n">should</span> <span class="n">contain</span><span class="o">(</span><span class="n">facts</span><span class="o">(</span><span class="mi">2</span><span class="o">))</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
   
 </feed>

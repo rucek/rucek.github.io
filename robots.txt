@@ -1,4 +1,4 @@
 User-agent: *
-Disallow: 
+Disallow:
 
-Sitemap: http://rucek.github.io/sitemap.xml 
+Sitemap: http://rucek.github.io/sitemap.xml
