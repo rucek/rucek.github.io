@@ -9,7 +9,7 @@
   <meta name="author" content="Jacek Kunicki">
 
   
-  <meta name="description" content=" Blog Archives ">
+  <meta name="description" content="Background The most common scenario when using SSL/TLS is the basic handshake where the server is the only party that is authenticated with its &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -101,6 +101,178 @@
   
   
   
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/09/10/ssl-client-certificates-on-the-jvm/">SSL Client Certificates on the JVM</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-09-10T01:26:31+02:00'><span class='date'><span class='date-month'>Sep</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>1:26 am</span></time>
+        
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>Background</h2>
+
+<p>The most common scenario when using SSL/TLS is the <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security#Basic_TLS_handshake">basic handshake</a> where the server is the only party that is authenticated with its certificate - the client remains unauthenticated. We may then connect to the server just knowing its address:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>openssl s_client -connect google.com:443
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this post I&rsquo;m going to deal with a less popular scenario - the <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake">client-authenticated handshake</a> - in which the client is required to present its certificate as well and use its private key.</p>
+
+<p>Let&rsquo;s assume our secure server is <code>secure.server.com:443</code> and we already have the client&rsquo;s certificate in <code>client.crt</code> and the client&rsquo;s private key in <code>client.key</code>, both of them in the <a href="https://en.wikipedia.org/wiki/Privacy-enhanced_Electronic_Mail#Sample_PEM_format_x_509_cert">PEM format</a>. We can again use <code>s_client</code> to test the connection, but this time we need to present the certificate and private key:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>openssl s_client -connect secure.server.com:443 -cert client.crt -key client.key
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>However, things get a little bit less straightforward on the JVM. Any secure HTTP connection on the JVM, no matter which library you use, boils down to using the <code>javax.net.ssl.HttpsURLConnection</code>, which is a part of the <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html">Java Secure Socket Extension (JSSE)</a>.</p>
+
+<h2>JSSE, key stores and trust stores</h2>
+
+<p>Among other stuff, JSSE has a concept of <em>key stores</em> and <em>trust stores</em>. The former are containers for keys/certificates presented to the server, the latter let the JVM know whether a given server certificate is signed by a trusted <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security#Certificate_Authorities">Certificate Authority (CA)</a>. The default format for both stores is JKS (which stands for <em>Java keystore</em>), but JSSE is also capable of reading the <a href="https://en.wikipedia.org/wiki/PKCS_12">PKCS #12</a> format.</p>
+
+<h3>Custom key store</h3>
+
+<p>As you may already have guessed, in order to use the aforementioned client&rsquo;s certificate and key, we need to store them in a keystore. We&rsquo;ll go for the PKCS #12 format and use <code>openssl</code> to do the necessary conversions:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>openssl pkcs12 -export -out keystore.p12 -in client.crt -inkey client.key
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Please make sure <strong>not</strong> to provide an empty password when <code>openssl</code> prompts you - not only is it unreasonable from the security point of view, but it will also make mysterious <code>NullPointerException</code>s fly around when you attempt to use a key store which has an empty password.</p>
+
+<p>In order for the JVM to use the custom key store, you need to set the following system properties:</p>
+
+<pre><code class="``">  -Djavax.net.ssl.keyStore=keystore.p12
+  -Djavax.net.ssl.keyStoreType=pkcs12
+  -Djavax.net.ssl.keyStorePassword=&lt;password&gt;
+</code></pre>
+
+<p>where <code>&lt;password&gt;</code> is the key store password you chose when prompted by <code>openssl</code>. You may of course set those properties at runtime by calling <code>System.getProperties().put(key, value)</code> (in Java) or <code>sys.props += key -&gt; value</code> (in Scala).</p>
+
+<p>Provided that the certificate of <code>secure.server.com</code> is signed by a trusted CA, the steps so far are enough to get up and running. However, if the server&rsquo;s certificate is a self-signed one, you need an additional step, which is telling JSSE to trust the self-signed certificate.</p>
+
+<h3>Custom trust store</h3>
+
+<p>We&rsquo;re going to achieve this by creating a trust store containing the certificate of the CA (the untrusted one) which signed the server&rsquo;s certificate. But where do we take the CA&rsquo;s certificate from? Once again <code>openssl</code> comes to the rescue. After executing</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>openssl s_client -connect secure.server.com:443 -showcerts &lt; /dev/null
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>you&rsquo;re going to see - among other output - a number of certificates in the PEM format, i.e. something like:</p>
+
+<pre><code class="``">  -----BEGIN CERTIFICATE-----
+  (some Base64 content)
+  -----END CERTIFICATE-----
+</code></pre>
+
+<p>You&rsquo;re interested in the last certificate in the sequence, which is going to be the CA&rsquo;s certificate - you need to save it (including the <code>BEGIN/END CERTIFICATE</code> lines) into a file, e.g. <code>ca.crt</code>.</p>
+
+<p>Now it&rsquo;s time to decide whether you want to import the CA&rsquo;s certificate into the global JSSE trust store or just to create a local trust store with a single certificate. The global trust store contains certificates of trusted CAs like VeriSign/Symantec, so it&rsquo;s necessary if you want to connect to most of the well-known servers like <code>google.com</code>. The tricky part is that when you tell JSSE to use a custom trust store, it won&rsquo;t be using the global one anymore, so you will only be able to connect to servers whose certificates are signed by the CA in the custom trust store.</p>
+
+<p>Therefore, you have three options to choose from:</p>
+
+<ol>
+<li><p>Extend the global trust store by importing the untrusted CA&rsquo;s certificate into it. This is the easiest solution, but you need to remember that it will affect all applications running on the given JVM, i.e. all of them will trust certificates signed by the CA in question.</p></li>
+<li><p>Make a copy of the global trust store and import the CA&rsquo;s certificate into the copy, then use the copy as a custom trust store in your application. In this case your application will be able to connect both to the well-known servers and to <code>secure.server.com</code>.</p></li>
+<li><p>Create a custom trust store with only the certificate of the untrusted CA. Your application is then only going to trust certificated signed by the selected CA and it won&rsquo;t be able to make a secure connection to a well-known server like <code>google.com</code>.</p></li>
+</ol>
+
+
+<p>Let&rsquo;s now explore the above options in more detail.</p>
+
+<h4>1. Extending the global trust store</h4>
+
+<p>The global trust store is located in <code>$JAVA_HOME/jre/lib/security/cacerts</code>. To import the <code>ca.crt</code> into the trust store, we&rsquo;re going to use JDK&rsquo;s <code>keytool</code> utility (if you have <code>java</code> in the <code>PATH</code>, you should have <code>keytool</code> as well):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>keytool -import -file ca.crt -alias <span class="s2">&quot;CA alias of your choice&quot;</span> <span class="se">\</span>
+</span><span class='line'>        -keystore <span class="nv">$JAVA_HOME</span>/jre/lib/security/cacerts
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note: the default password for the global trust store is <code>changeit</code> (yes, not the most secure one).</p>
+
+<p>Since the global trust store is used by default in a JVM application, no further configuration is needed.</p>
+
+<h4>2. Using an extended copy of the global trust store</h4>
+
+<p>First simply create a copy of the global trust store:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>cp <span class="nv">$JAVA_HOME</span>/jre/lib/security/cacerts my-cacerts.jks
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then import <code>ca.crt</code> like in the previous case (again, the default password is <code>changeit</code>):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>keytool -import -file ca.crt -alias <span class="s2">&quot;CA alias of your choice&quot;</span> -keystore my-cacerts.jks
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Finally, you need to tell the JVM to use the custom trust store by setting the following system properties:</p>
+
+<pre><code class="``">  -Djavax.net.ssl.trustStore=my-cacerts.jks
+  -Djavax.net.ssl.trustStoreType=JKS
+  -Djavax.net.ssl.trustStorePassword=changeit
+</code></pre>
+
+<h4>3. Using a single-certificate trust store</h4>
+
+<p>The first step here is to create a new key store (yes, a trust store is a actually a key store):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>keytool -genkey -dname <span class="s2">&quot;cn=CLIENT&quot;</span> -alias truststorekey -keyalg RSA -keystore truststore.jks
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>cn</code> value in the <code>dname</code> parameter is an arbitrary name and doesn&rsquo;t really matter. The same applies to the <code>alias</code> parameter. And again, please remember not to set an empty password.</p>
+
+<p>Then you import <code>ca.crt</code> into the newly created trust store:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>keytool -import -file ca.crt -alias <span class="s2">&quot;CA alias of your choice&quot;</span> -keystore truststore.jks
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Finally, you need to tell the JVM to use the custom trust store by setting the following system properties:</p>
+
+<pre><code class="``">  -Djavax.net.ssl.trustStore=truststore.jks
+  -Djavax.net.ssl.trustStoreType=JKS
+  -Djavax.net.ssl.trustStorePassword=&lt;password&gt;
+</code></pre>
+
+<p>where <code>&lt;password&gt;</code> is the password you chose when creating your custom trust store.</p>
+
+<h2>Summary</h2>
+
+<p>Hopefully, this post has shed some light on the not-so-common scenario of a secure JVM client authenticating itself with a certificate and private key. You should now be able to seamlessly implement this kind of authentication in your JVM application.</p>
+</div>
+  
+  
+
+
+    </article>
   
   <div class="pagination">
     
