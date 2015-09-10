@@ -4,7 +4,7 @@
   <title><![CDATA[Jacek Kunicki]]></title>
   <link href="http://rucek.github.io/atom.xml" rel="self"/>
   <link href="http://rucek.github.io/"/>
-  <updated>2015-09-10T13:08:30+02:00</updated>
+  <updated>2015-09-10T13:25:46+02:00</updated>
   <id>http://rucek.github.io/</id>
   <author>
     <name><![CDATA[Jacek Kunicki]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[SSL Client Certificates on the JVM]]></title>
     <link href="http://rucek.github.io/blog/2015/09/10/ssl-client-certificates-on-the-jvm/"/>
-    <updated>2015-09-10T01:26:31+02:00</updated>
+    <updated>2015-09-10T12:26:31+02:00</updated>
     <id>http://rucek.github.io/blog/2015/09/10/ssl-client-certificates-on-the-jvm</id>
     <content type="html"><![CDATA[<h2>Background</h2>
 
