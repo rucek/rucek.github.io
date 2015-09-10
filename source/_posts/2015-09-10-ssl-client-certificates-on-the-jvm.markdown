@@ -1,10 +1,9 @@
 ---
 layout: post
 title: "SSL client certificates on the JVM"
-date: 2015-09-09 15:26:31 +0200
+date: 2015-09-10 12:26:31 +0200
 comments: true
 categories:
-visible: false
 ---
 
 ## Background
@@ -144,4 +143,4 @@ where `<password>` is the password you chose when creating your custom trust sto
 
 ## Summary
 
-Hopefully, this post has shed some light on the not-so-common scenario of a secure JVM client authenticating itself with a certificate and private key.
+Hopefully, this post has shed some light on the not-so-common scenario of a secure JVM client authenticating itself with a certificate and private key. You should now be able to seamlessly implement this kind of authentication in your JVM application.
