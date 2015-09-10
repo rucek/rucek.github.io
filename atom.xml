@@ -4,7 +4,7 @@
   <title><![CDATA[Jacek Kunicki]]></title>
   <link href="http://rucek.github.io/atom.xml" rel="self"/>
   <link href="http://rucek.github.io/"/>
-  <updated>2015-09-10T12:10:30+02:00</updated>
+  <updated>2015-09-10T12:21:14+02:00</updated>
   <id>http://rucek.github.io/</id>
   <author>
     <name><![CDATA[Jacek Kunicki]]></name>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[SSL Client Certificates on the JVM]]></title>
-    <link href="http://rucek.github.io/blog/2015/09/09/ssl-client-certificates-on-the-jvm/"/>
-    <updated>2015-09-09T15:26:31+02:00</updated>
-    <id>http://rucek.github.io/blog/2015/09/09/ssl-client-certificates-on-the-jvm</id>
+    <link href="http://rucek.github.io/blog/2015/09/10/ssl-client-certificates-on-the-jvm/"/>
+    <updated>2015-09-10T01:26:31+02:00</updated>
+    <id>http://rucek.github.io/blog/2015/09/10/ssl-client-certificates-on-the-jvm</id>
     <content type="html"><![CDATA[<h2>Background</h2>
 
 <p>The most common scenario when using SSL/TLS is the <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security#Basic_TLS_handshake">basic handshake</a> where the server is the only party that is authenticated with its certificate - the client remains unauthenticated. We may then connect to the server just knowing its address:</p>
