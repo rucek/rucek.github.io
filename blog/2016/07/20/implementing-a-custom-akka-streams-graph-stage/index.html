@@ -1,24 +1,127 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Jacek Kunicki]]></title>
-  <link href="http://rucek.github.io/atom.xml" rel="self"/>
-  <link href="http://rucek.github.io/"/>
-  <updated>2016-07-20T11:30:51+02:00</updated>
-  <id>http://rucek.github.io/</id>
-  <author>
-    <name><![CDATA[Jacek Kunicki]]></name>
-    
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Implementing a Custom Akka Streams Graph Stage - Jacek Kunicki</title>
+  <meta name="author" content="Jacek Kunicki">
 
   
-  <entry>
-    <title type="html"><![CDATA[Implementing a Custom Akka Streams Graph Stage]]></title>
-    <link href="http://rucek.github.io/blog/2016/07/20/implementing-a-custom-akka-streams-graph-stage/"/>
-    <updated>2016-07-20T11:39:00+02:00</updated>
-    <id>http://rucek.github.io/blog/2016/07/20/implementing-a-custom-akka-streams-graph-stage</id>
-    <content type="html"><![CDATA[<h2>Background</h2>
+  <meta name="description" content="Background Akka Streams offers a number of predefined building blocks for your graphs (i.e. processing pipelines). Should you need a non-standard &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rucek.github.io/blog/2016/07/20/implementing-a-custom-akka-streams-graph-stage">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Jacek Kunicki" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=Fjalla+One" rel="stylesheet" type="text/css">
+<!--- MathJax Configuration -->
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Jacek Kunicki</a></h1>
+  
+    <h2>to code or not to be</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscribe" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS" target="_blank"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="25" height="25" viewbox="0 0 100 100"><path class="social" d="M 13.310204,73.332654 C 5.967347,73.332654 0,79.322448 0,86.621428 c 0,7.338776 5.967347,13.262246 13.310204,13.262246 7.370408,0 13.328572,-5.92245 13.328572,-13.262246 0,-7.29898 -5.958164,-13.288774 -13.328572,-13.288774 z M 0.01530612,33.978572 V 53.143878 C 12.493878,53.143878 24.229592,58.02347 33.068368,66.865306 41.894898,75.685714 46.767346,87.47449 46.767346,100 h 19.25 C 66.017346,63.592858 36.4,33.979592 0.01530612,33.978572 l 0,0 z M 0.03877552,0 V 19.17449 C 44.54796,19.17551 80.77551,55.437756 80.77551,100 H 100 C 100,44.87653 55.15102,0 0.03877552,0 z"></path></svg></a></li>
+  
+</ul>
+  
+  
+  
+  
+  
+<ul class="subscribe">
+  <li><a href="https://github.com/rucek" rel="subscribe-github" title="@rucek on GitHub" target="_blank"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="25" height="25" viewbox="0 0 100 100"><path class="social" d="M 50,0 C 22.385714,0 0,22.385714 0,50 0,77.614286 22.385714,100 50,100 77.614286,100 100,77.614286 100,50 100,22.385714 77.614286,0 50,0 z m 29.692858,79.692858 c -3.859184,3.859182 -8.351022,6.887754 -13.35,9.00306 -1.27041,0.536736 -2.560204,1.009184 -3.867348,1.415306 v -7.493878 c 0,-3.938774 -1.35102,-6.835714 -4.053062,-8.690816 1.692858,-0.163264 3.24694,-0.390816 4.663266,-0.683672 1.416326,-0.292858 2.913266,-0.716328 4.491838,-1.27041 1.57857,-0.55408 2.994896,-1.213264 4.247958,-1.97755 1.253062,-0.765306 2.458164,-1.758164 3.613266,-2.978572 1.155102,-1.220408 2.12449,-2.604082 2.905102,-4.15 0.780612,-1.545918 1.4,-3.40204 1.855102,-5.566326 0.455102,-2.164286 0.683674,-4.54898 0.683674,-7.153062 0,-5.045918 -1.643878,-9.341836 -4.931634,-12.890816 C 77.44796,33.35 77.285714,29.10204 75.463266,24.512244 l -1.22143,-0.145918 c -0.845918,-0.09796 -2.368366,0.260204 -4.565306,1.07449 -2.196938,0.814286 -4.663264,2.14796 -7.396938,4.004082 -3.87449,-1.07449 -7.893878,-1.611224 -12.061224,-1.611224 -4.19898,0 -8.203062,0.536734 -12.012246,1.611224 -1.72449,-1.17245 -3.361224,-2.139796 -4.907142,-2.905102 C 31.753062,25.77449 30.516326,25.254082 29.587756,24.97653 28.660204,24.7 27.79796,24.528572 27,24.463266 c -0.79796,-0.0653 -1.310204,-0.08062 -1.537756,-0.04898 -0.22755,0.03164 -0.390816,0.0653 -0.487754,0.09796 -1.82347,4.62245 -1.985714,8.87143 -0.487756,12.743878 -3.287754,3.54796 -4.931632,7.844898 -4.931632,12.890816 0,2.604082 0.227552,4.988776 0.683674,7.153062 0.456122,2.164286 1.07449,4.020408 1.855102,5.566326 0.780612,1.545918 1.75,2.929592 2.905102,4.15 1.155102,1.220408 2.360204,2.213266 3.613264,2.978572 1.253062,0.766326 2.669388,1.42449 4.24796,1.97755 1.578572,0.554082 3.07551,0.976532 4.491836,1.27041 1.416328,0.292856 2.970408,0.521428 4.663266,0.683672 -2.669388,1.82347 -4.004082,4.720408 -4.004082,8.690816 v 7.639796 C 36.536734,89.818368 35.083674,89.3 33.656122,88.695918 c -4.99898,-2.115306 -9.490816,-5.143878 -13.35,-9.00306 -3.859184,-3.859184 -6.887754,-8.351022 -9.00306,-13.35 C 9.1163263,61.171428 8.0071428,55.67347 8.0071428,50 c 0,-5.67347 1.1091835,-11.171428 3.2969392,-16.342858 2.115306,-4.998978 5.143878,-9.490816 9.00306,-13.35 3.859184,-3.859182 8.351022,-6.887754 13.35,-9.00306 C 38.828572,9.1163266 44.32653,8.0071428 50,8.0071428 c 5.67347,0 11.171428,1.1091838 16.342858,3.2969392 5,2.115306 9.490816,5.143878 13.35,9.00306 3.859182,3.859184 6.887754,8.351022 9.00306,13.35 2.186736,5.17245 3.295918,10.67041 3.295918,16.342858 0,5.672448 -1.109182,11.171428 -3.296938,16.342858 -2.115306,4.998978 -5.143878,9.490816 -9.00204,13.35 l 0,0 z"></path></svg></a></li>
+</ul>
+  
+  
+  
+<ul class="subscribe">
+  <li><a href="https://twitter.com/rucek" rel="subscribe-twitter" title="@rucek on Twitter" target="_blank"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="25" height="25" viewBox="0 0 512 512"><path class="social" d="M0.001,334.932c33.327,30.816,118.891,59.981,188.517-8.271c-12.52,1.955-22.972-0.416-30.913-8.269
+  c-7.531-7.465-7.945-15.182-3.914-22.202c3.275-5.725,10.184-9.741,16.977-13.934c-12.323,2.285-22.829,1.095-32.218-3.706
+  c-12.604-6.444-24.863-13.228-28.3-27.207c7.71-8.112,16.28-15.359,34.831-12.627c-17.45-5.83-33.087-13.429-44.41-24.815
+  c-11.028-11.091-12.163-18.302-13.932-26.996c9.632-3.567,19.688-5.421,30.478-4.353c-24.397-12.476-34.757-29.63-40.487-48.325
+  c-1.731-5.652-2.044-11.03-1.31-16.545c98.826,37.305,145.11,64.109,170.662,89.251c11.496-30.589,38.3-99.868,78.371-123.646
+  c0.191,3.77-1.309,7.837-4.357,12.189c11.863-6.609,21.125-17.188,37.445-16.98c-1.879,7.723-7.279,13.904-17.85,17.854
+  c10.662-4.084,21.463-7.545,32.65-9.578c10.375-1.881,10.229,6.304,4.355,10.444c-11.916,8.412-24.578,9.456-37.006,13.498
+  c38.105,0.949,69.266,18.994,93.604,58.343c8.088,13.074,13.52,26.149,14.807,40.487c16.254,4.563,32.426,5.494,48.76,2.61
+  c4.475-0.796,8.645-1.63,12.627-3.482c-6.354,9.529-13.686,17.356-23.947,20.899c-9.811,3.387-19.637,6.688-30.473,6.968
+  c17.641,6.675,37.082,7.045,57.033,5.659c-24.402,23.486-43.08,22.922-61.824,22.642c-8.221,34.703-25.025,69.315-60.52,101.005
+  c-46.559,41.569-96.678,61.397-148.457,65.742c-48.552,4.07-95.488,3.512-146.726-20.464
+  C56.486,393.349,24.648,368.884,0.001,334.932L0.001,334.932z"/></svg></a></li>
+</ul>
+  
+  
+  
+  
+  
+  
+    
+      <form action="https://www.google.com/search" method="get">
+        <fieldset role="search">
+          <input type="hidden" name="sitesearch" value="rucek.github.io" />
+    
+          <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+        </fieldset>
+      </form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Implementing a Custom Akka Streams Graph Stage</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-20T11:39:00+02:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>11:39 am</span></time>
+        
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2>Background</h2>
 
 <p><a href="http://doc.akka.io/docs/akka/2.4.8/scala/stream/index.html">Akka Streams</a> offers a number of predefined building blocks for your graphs (i.e. processing pipelines). Should you need a non-standard solution, there&rsquo;s an API to help you write the custom part of the graph. In this post I&rsquo;m going to walk you through implementing your own graph stage.</p>
 
@@ -372,277 +475,104 @@
 <p>For even more details, please refer to the <a href="http://doc.akka.io/docs/akka/2.4.8/scala/stream/stream-customize.html">Custom stream processing</a> section of the Akka Streams documentation.</p>
 
 <p>If you find the <code>AccumulateWhileUnchanged</code> stage useful, there is no need to rewrite it from scratch, since it is soon (PR pending) going to be a part of <a href="https://github.com/akka/akka-stream-contrib">akka-stream-contrib</a> - a project which groups various add-ons to Akka Streams core.</p>
-]]></content>
-  </entry>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
   
-  <entry>
-    <title type="html"><![CDATA[Multiple Entrypoints in Docker]]></title>
-    <link href="http://rucek.github.io/blog/2016/02/12/multiple-entrypoints-in-docker/"/>
-    <updated>2016-02-12T21:35:00+01:00</updated>
-    <id>http://rucek.github.io/blog/2016/02/12/multiple-entrypoints-in-docker</id>
-    <content type="html"><![CDATA[<h2>Background</h2>
-
-<p>When using <a href="https://www.docker.com/">Docker</a> containers for a number of building blocks of your application, the recommended approach is to run a separate container for every building block, so that the components are well separated. And the <a href="https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run-only-one-process-per-container">Docker best practices</a> suggest running a single process per container.</p>
-
-<p>However, you may imagine a scenario in which it&rsquo;s reasonable to run multiple services in a single container (an example will follow). Then the question arises how to run those services using a single <code>ENTRYPOINT</code> command in the <code>Dockerfile</code>.</p>
-
-<h2>Example scenario</h2>
-
-<p>Let&rsquo;s say your application communicates with an external service through an SSH tunnel (or a VPN, or anything more than a direct connection - you name it). Then, there is a number of ways to set up the tunnel along with the application itself:</p>
-
-<ol>
-<li><p>Setup the tunnel on the host, run the container with the <code>host</code> network mode (i.e. with the <code>--net=host</code> switch) - which means that the container has no separate network stack but uses the host&rsquo;s one, so it can just access the tunnel.</p></li>
-<li><p>Setup the tunnel on the host, run the container in the default network mode (i.e. <code>bridge</code>) and somehow access the tunnel on the host from the container. Somehow here means e.g. using the <code>--add-host</code> switch (with the host&rsquo;s IP) when running the container, which adds an <code>/etc/hosts</code> entry in the container (see <a href="https://docs.docker.com/engine/reference/run/#managing-etc-hosts">the docs</a> for details). Or you can try <a href="http://stackoverflow.com/questions/22944631/how-to-get-the-ip-address-of-the-docker-host-from-inside-a-docker-container">some other hacks</a> as well.</p></li>
-<li><p>Run the tunnel in the container.</p></li>
-</ol>
 
 
-<p>Now, the problem with options 1 and 2 is that you lose the <em>run anywhere</em> part of the Docker philosophy, since <em>anywhere</em> becomes limited to <em>anywhere-with-an-ssh-tunnel</em>. Plus, your infrastructure is no more immutable, since by setting up the tunnel you just made a change to the host. A change about which you need to remember every time you run the container somewhere else.</p>
 
-<p>Therefore, option 3 seems to be the way to go. But since Docker allows only a single <code>ENTRYPOINT</code> (to be precise, only the last <code>ENTRYPOINT</code> in the <code>Dockerfile</code> has an effect), you need to find a way to run multiple processes (the tunnel and the application) with a single command. Let&rsquo;s see how you can do it.</p>
-
-<h2>Solution</h2>
-
-<p>The simplest idea is to create a shell script to run the required processes and use that script as the <code>ENTRYPOINT</code>. But I wouldn&rsquo;t write a blogpost about writing a shell script, would I? Instead, let&rsquo;s dig into the recommended technique which uses <a href="http://supervisord.org/"><em>supervisord</em></a> - a process control system.</p>
-
-<p>In the big picture, <em>supervisord</em> is a tool which lets you run multiple programs at once from a single place. The benefits over a plain old shell script are the numerous configuration and monitoring options. Here I&rsquo;m going to cover only the basic usage, which is just enough for our scenario - feel free to explore the more advanced stuff yourself.</p>
-
-<p>To use <em>supervisord</em>, you first need to install it, preferably using a package manager. In an Ubuntu/Debian-based container you need to add the following to the <code>Dockerfile</code>:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>RUN apt-get update && apt-get install -y supervisor</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Since in this example you&rsquo;re also going to need an SSH tunnel, let&rsquo;s install the SSH client too:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>RUN apt-get update && apt-get install -y supervisor openssh-client</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>Note:</strong> always remember to combine <code>apt-get update</code> and <code>apt-get install</code> into a single command in order to get the latest package versions - see <a href="https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#apt-get">the docs</a> for details.</p>
-
-<p>Now that <em>supervisord</em> and the SSH client are installed, it&rsquo;s time for some configuration. Let&rsquo;s assume that your application&rsquo;s entrypoint is <code>/opt/myapp/bin/myapp</code>. The <em>supervisord</em> configuration will then be something like:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='ini'><span class='line'><span class="k">[supervisord]</span>
-</span><span class='line'><span class="na">nodaemon</span><span class="o">=</span><span class="s">true</span>
-</span><span class='line'><span class="na">logfile</span><span class="o">=</span><span class="s">/var/log/supervisord/supervisord.log</span>
-</span><span class='line'><span class="na">childlogdir</span><span class="o">=</span><span class="s">/var/log/myapp</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">[program:ssh]</span>
-</span><span class='line'><span class="na">command</span><span class="o">=</span><span class="s">ssh -N -L8080:localhost:8080 user@example.com</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">[program:myapp]</span>
-</span><span class='line'><span class="na">stdout_logfile</span><span class="o">=</span><span class="s">/dev/stdout</span>
-</span><span class='line'><span class="na">stdout_logfile_maxbytes</span><span class="o">=</span><span class="s">0</span>
-</span><span class='line'><span class="na">command</span><span class="o">=</span><span class="s">/opt/myapp/bin/myapp --some-configuration</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>Note:</strong> If you put the congfiguration file in the defult location inside the container, i.e. <code>/etc/supervisor/conf.d/supervisord.conf</code>, it will automatically be picked up by <em>supervisord</em>. However, for the sake of this example, let&rsquo;s assume you chose a custom location inside the container, e.g. <code>/etc/myapp/supervisord.conf</code>.</p>
-
-<p>The <code>[supervisord]</code> section configures the main <em>supervisord</em> process. The <code>nodaemon=true</code> indicates that the process should stay in the foreground (as the container would be terminated otherwise). Additionally, you can specify a log file for <em>supervisord</em> logs (with the <code>logfile</code> parameter) and a directory for the messages captured from the <code>stdout</code> and <code>stderr</code> of the child processes (here: <code>ssh</code> and <code>myapp</code>) - with the <code>childlogdir</code> parameter.</p>
-
-<p>Next come the configurations of your processes that will run in the container.</p>
-
-<p>For <code>ssh</code> you define your arbitrary port forwarding with the <code>-L</code> switch. Plus you can use the <code>-N</code> flag, which means that no remote command would be executed - which is <em>useful for just forwarding ports</em>, according to the SSH man page.</p>
-
-<p>In <code>myapp</code> configuration the <code>stdout_logfile</code> parameter indicates where the <code>stdout</code> of the process should go - in this case it goes to the container&rsquo;s <code>stdout</code>. A log rotation policy can be configured  with <code>stdout_logfile_maxbytes</code>, where a value of zero means no rotation. The <code>command</code> parameter is self-explanatory - this is the full command to run your application.</p>
-
-<p>Having configured <em>supervisord</em>, the last step is to actually run it when the container starts - with the <code>ENTRYPOINT</code> command:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ini'><span class='line'><span class="err">ENTRYPOINT</span> <span class="k">[&quot;/usr/bin/supervisord&quot;, &quot;-c&quot;, &quot;/etc/myapp/supervisord.conf&quot;]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Here you can see that we use the <code>-c</code> switch to provide the path to a custom configuration file. This wouldn&rsquo;t be necessary if the configuration was in <code>/etc/supervisor/conf.d/supervisord.conf</code>.</p>
-
-<p>After running the container you should see a few logs from <em>supervisord</em>, indicating that both the daemon and your processes have been started:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ini'><span class='line'><span class="err">2016-02-09</span> <span class="err">16:47:13,949</span> <span class="err">CRIT</span> <span class="err">Supervisor</span> <span class="err">running</span> <span class="err">as</span> <span class="err">root</span> <span class="err">(no</span> <span class="err">user</span> <span class="err">in</span> <span class="err">config</span> <span class="err">file)</span>
-</span><span class='line'><span class="err">2016-02-09</span> <span class="err">16:47:13,951</span> <span class="err">INFO</span> <span class="err">supervisord</span> <span class="err">started</span> <span class="err">with</span> <span class="err">pid</span> <span class="err">1</span>
-</span><span class='line'><span class="err">2016-02-09</span> <span class="err">16:47:14,953</span> <span class="err">INFO</span> <span class="err">spawned:</span> <span class="err">&#39;ssh&#39;</span> <span class="err">with</span> <span class="err">pid</span> <span class="err">8</span>
-</span><span class='line'><span class="err">2016-02-09</span> <span class="err">16:47:14,954</span> <span class="err">INFO</span> <span class="err">spawned:</span> <span class="err">&#39;myapp&#39;</span> <span class="err">with</span> <span class="err">pid</span> <span class="err">9</span>
-</span><span class='line'><span class="err">2016-02-09</span> <span class="err">16:47:16,754</span> <span class="err">INFO</span> <span class="err">success:</span> <span class="err">ssh</span> <span class="err">entered</span> <span class="err">RUNNING</span> <span class="err">state,</span> <span class="err">process</span> <span class="err">has</span> <span class="err">stayed</span> <span class="err">up</span> <span class="err">for</span> <span class="err">&gt;</span> <span class="err">than</span> <span class="err">1</span> <span class="err">seconds</span> <span class="err">(startsecs)</span>
-</span><span class='line'><span class="err">2016-02-09</span> <span class="err">16:47:16,755</span> <span class="err">INFO</span> <span class="err">success:</span> <span class="err">myapp</span> <span class="err">entered</span> <span class="err">RUNNING</span> <span class="err">state,</span> <span class="err">process</span> <span class="err">has</span> <span class="err">stayed</span> <span class="err">up</span> <span class="err">for</span> <span class="err">&gt;</span> <span class="err">than</span> <span class="err">1</span> <span class="err">seconds</span> <span class="err">(startsecs)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Summary</h2>
-
-<p>You have just learned the recommended way to run multiple processes in a Docker container - if you know what you&rsquo;re doing, i.e. you really need more than one process in your container. Please refer to <a href="http://supervisord.org/"><em>supervisord</em> docs</a> if your scenario is anything more than this basic one.</p>
-]]></content>
-  </entry>
+  <span class="byline author vcard">Authored by <span class="fn">
   
-  <entry>
-    <title type="html"><![CDATA[SSL Client Certificates on the JVM]]></title>
-    <link href="http://rucek.github.io/blog/2015/09/10/ssl-client-certificates-on-the-jvm/"/>
-    <updated>2015-09-10T12:26:31+02:00</updated>
-    <id>http://rucek.github.io/blog/2015/09/10/ssl-client-certificates-on-the-jvm</id>
-    <content type="html"><![CDATA[<h2>Background</h2>
-
-<p>The most common scenario when using SSL/TLS is the <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security#Basic_TLS_handshake">basic handshake</a> where the server is the only party that is authenticated with its certificate - the client remains unauthenticated. We may then connect to the server just knowing its address:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>openssl s_client -connect google.com:443
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>In this post I&rsquo;m going to deal with a less popular scenario - the <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake">client-authenticated handshake</a> - in which the client is required to present its certificate as well and use its private key.</p>
-
-<p>Let&rsquo;s assume our secure server is <code>secure.server.com:443</code> and we already have the client&rsquo;s certificate in <code>client.crt</code> and the client&rsquo;s private key in <code>client.key</code>, both of them in the <a href="https://en.wikipedia.org/wiki/Privacy-enhanced_Electronic_Mail#Sample_PEM_format_x_509_cert">PEM format</a>. We can again use <code>s_client</code> to test the connection, but this time we need to present the certificate and private key:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>openssl s_client -connect secure.server.com:443 -cert client.crt -key client.key
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>However, things get a little bit less straightforward on the JVM. Any secure HTTP connection on the JVM, no matter which library you use, boils down to using the <code>javax.net.ssl.HttpsURLConnection</code>, which is a part of the <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html">Java Secure Socket Extension (JSSE)</a>.</p>
-
-<h2>JSSE, key stores and trust stores</h2>
-
-<p>Among other stuff, JSSE has a concept of <em>key stores</em> and <em>trust stores</em>. The former are containers for keys/certificates presented to the server, the latter let the JVM know whether a given server certificate is signed by a trusted <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security#Certificate_Authorities">Certificate Authority (CA)</a>. The default format for both stores is JKS (which stands for <em>Java keystore</em>), but JSSE is also capable of reading the <a href="https://en.wikipedia.org/wiki/PKCS_12">PKCS #12</a> format.</p>
-
-<h3>Custom key store</h3>
-
-<p>As you may already have guessed, in order to use the aforementioned client&rsquo;s certificate and key, we need to store them in a keystore. We&rsquo;ll go for the PKCS #12 format and use <code>openssl</code> to do the necessary conversions:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>openssl pkcs12 -export -out keystore.p12 -in client.crt -inkey client.key
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Please make sure <strong>not</strong> to provide an empty password when <code>openssl</code> prompts you - not only is it unreasonable from the security point of view, but it will also make mysterious <code>NullPointerException</code>s fly around when you attempt to use a key store which has an empty password.</p>
-
-<p>In order for the JVM to use the custom key store, you need to set the following system properties:</p>
-
-<pre><code class="``">  -Djavax.net.ssl.keyStore=keystore.p12
-  -Djavax.net.ssl.keyStoreType=pkcs12
-  -Djavax.net.ssl.keyStorePassword=&lt;password&gt;
-</code></pre>
-
-<p>where <code>&lt;password&gt;</code> is the key store password you chose when prompted by <code>openssl</code>. You may of course set those properties at runtime by calling <code>System.getProperties().put(key, value)</code> (in Java) or <code>sys.props += key -&gt; value</code> (in Scala).</p>
-
-<p>Provided that the certificate of <code>secure.server.com</code> is signed by a trusted CA, the steps so far are enough to get up and running. However, if the server&rsquo;s certificate is a self-signed one, you need an additional step, which is telling JSSE to trust the self-signed certificate.</p>
-
-<h3>Custom trust store</h3>
-
-<p>We&rsquo;re going to achieve this by creating a trust store containing the certificate of the CA (the untrusted one) which signed the server&rsquo;s certificate. But where do we take the CA&rsquo;s certificate from? Once again <code>openssl</code> comes to the rescue. After executing</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>openssl s_client -connect secure.server.com:443 -showcerts &lt; /dev/null
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>you&rsquo;re going to see - among other output - a number of certificates in the PEM format, i.e. something like:</p>
-
-<pre><code class="``">  -----BEGIN CERTIFICATE-----
-  (some Base64 content)
-  -----END CERTIFICATE-----
-</code></pre>
-
-<p>You&rsquo;re interested in the last certificate in the sequence, which is going to be the CA&rsquo;s certificate - you need to save it (including the <code>BEGIN/END CERTIFICATE</code> lines) into a file, e.g. <code>ca.crt</code>.</p>
-
-<p>Now it&rsquo;s time to decide whether you want to import the CA&rsquo;s certificate into the global JSSE trust store or just to create a local trust store with a single certificate. The global trust store contains certificates of trusted CAs like VeriSign/Symantec, so it&rsquo;s necessary if you want to connect to most of the well-known servers like <code>google.com</code>. The tricky part is that when you tell JSSE to use a custom trust store, it won&rsquo;t be using the global one anymore, so you will only be able to connect to servers whose certificates are signed by the CA in the custom trust store.</p>
-
-<p>Therefore, you have three options to choose from:</p>
-
-<ol>
-<li><p>Extend the global trust store by importing the untrusted CA&rsquo;s certificate into it. This is the easiest solution, but you need to remember that it will affect all applications running on the given JVM, i.e. all of them will trust certificates signed by the CA in question.</p></li>
-<li><p>Make a copy of the global trust store and import the CA&rsquo;s certificate into the copy, then use the copy as a custom trust store in your application. In this case your application will be able to connect both to the well-known servers and to <code>secure.server.com</code>.</p></li>
-<li><p>Create a custom trust store with only the certificate of the untrusted CA. Your application is then only going to trust certificated signed by the selected CA and it won&rsquo;t be able to make a secure connection to a well-known server like <code>google.com</code>.</p></li>
-</ol>
-
-
-<p>Let&rsquo;s now explore the above options in more detail.</p>
-
-<h4>1. Extending the global trust store</h4>
-
-<p>The global trust store is located in <code>$JAVA_HOME/jre/lib/security/cacerts</code>. To import the <code>ca.crt</code> into the trust store, we&rsquo;re going to use JDK&rsquo;s <code>keytool</code> utility (if you have <code>java</code> in the <code>PATH</code>, you should have <code>keytool</code> as well):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>keytool -import -file ca.crt -alias <span class="s2">&quot;CA alias of your choice&quot;</span> <span class="se">\</span>
-</span><span class='line'>        -keystore <span class="nv">$JAVA_HOME</span>/jre/lib/security/cacerts
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Note: the default password for the global trust store is <code>changeit</code> (yes, not the most secure one).</p>
-
-<p>Since the global trust store is used by default in a JVM application, no further configuration is needed.</p>
-
-<h4>2. Using an extended copy of the global trust store</h4>
-
-<p>First simply create a copy of the global trust store:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>cp <span class="nv">$JAVA_HOME</span>/jre/lib/security/cacerts my-cacerts.jks
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Then import <code>ca.crt</code> like in the previous case (again, the default password is <code>changeit</code>):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>keytool -import -file ca.crt -alias <span class="s2">&quot;CA alias of your choice&quot;</span> -keystore my-cacerts.jks
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Finally, you need to tell the JVM to use the custom trust store by setting the following system properties:</p>
-
-<pre><code class="``">  -Djavax.net.ssl.trustStore=my-cacerts.jks
-  -Djavax.net.ssl.trustStoreType=JKS
-  -Djavax.net.ssl.trustStorePassword=changeit
-</code></pre>
-
-<h4>3. Using a single-certificate trust store</h4>
-
-<p>The first step here is to create a new key store (yes, a trust store is a actually a key store):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>keytool -genkey -dname <span class="s2">&quot;cn=CLIENT&quot;</span> -alias truststorekey -keyalg RSA -keystore truststore.jks
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The <code>cn</code> value in the <code>dname</code> parameter is an arbitrary name and doesn&rsquo;t really matter. The same applies to the <code>alias</code> parameter. And again, please remember not to set an empty password.</p>
-
-<p>Then you import <code>ca.crt</code> into the newly created trust store:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>keytool -import -file ca.crt -alias <span class="s2">&quot;CA alias of your choice&quot;</span> -keystore truststore.jks
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Finally, you need to tell the JVM to use the custom trust store by setting the following system properties:</p>
-
-<pre><code class="``">  -Djavax.net.ssl.trustStore=truststore.jks
-  -Djavax.net.ssl.trustStoreType=JKS
-  -Djavax.net.ssl.trustStorePassword=&lt;password&gt;
-</code></pre>
-
-<p>where <code>&lt;password&gt;</code> is the password you chose when creating your custom trust store.</p>
-
-<h2>Summary</h2>
-
-<p>Hopefully, this post has shed some light on the not-so-common scenario of a secure JVM client authenticating itself with a certificate and private key. You should now be able to seamlessly implement this kind of authentication in your JVM application.</p>
-]]></content>
-  </entry>
+    Jacek Kunicki
   
-</feed>
+  </span></span>
+
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-07-20T11:39:00+02:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>11:39 am</span></time>
+      
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/akka-streams/'>akka streams</a>, <a class='category' href='/blog/categories/scala/'>scala</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://rucek.github.io/blog/2016/07/20/implementing-a-custom-akka-streams-graph-stage/" data-via="rucek" data-counturl="http://rucek.github.io/blog/2016/07/20/implementing-a-custom-akka-streams-graph-stage/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/02/12/multiple-entrypoints-in-docker/" title="Previous Post: Multiple entrypoints in Docker">&laquo; Multiple entrypoints in Docker</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Jacek Kunicki -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> | Themed with <a href="https://github.com/lucaslew/whitespace">Whitespace</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
