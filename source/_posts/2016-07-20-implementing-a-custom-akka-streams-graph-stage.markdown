@@ -235,8 +235,8 @@ The `TestSink.probe` (line 6) creates an instance of `akka.stream.testkit.TestSu
 
 ## Summary
 
-After diligently going through this post, you should understand how the `GraphStage` API is designed and how to use it to implement your own graph stage. 
+After diligently going through this post, you should understand how the `GraphStage` API is designed and how to use it to implement your own graph stage.
 
 For even more details, please refer to the [Custom stream processing](http://doc.akka.io/docs/akka/2.4.8/scala/stream/stream-customize.html) section of the Akka Streams documentation.
 
-If you find the `AccumulateWhileUnchanged` stage useful, there is no need to rewrite it from scratch, since it is soon (PR pending) going to be a part of [akka-stream-contrib](https://github.com/akka/akka-stream-contrib) - a project which groups various add-ons to Akka Streams core. 
+If you find the `AccumulateWhileUnchanged` stage useful, there is no need to rewrite it from scratch, since it is a part of [akka-stream-contrib](https://github.com/akka/akka-stream-contrib) - a project which groups various add-ons to Akka Streams core. 
