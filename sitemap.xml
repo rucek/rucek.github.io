@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>http://rucek.github.io/blog/2017/04/12/benchmarking-single-result-query-performance-in-slick-using-jmh/</loc>
+    <lastmod>2017-04-12T14:41:12+02:00</lastmod>
+  </url>
+  <url>
     <loc>http://rucek.github.io/blog/2016/07/20/implementing-a-custom-akka-streams-graph-stage/</loc>
     <lastmod>2016-07-20T11:39:00+02:00</lastmod>
   </url>
@@ -26,5 +30,14 @@
   </url>
   <url>
     <loc>http://rucek.github.io/blog/categories/akka-streams/</loc>
+  </url>
+  <url>
+    <loc>http://rucek.github.io/blog/categories/slick/</loc>
+  </url>
+  <url>
+    <loc>http://rucek.github.io/blog/categories/performance/</loc>
+  </url>
+  <url>
+    <loc>http://rucek.github.io/blog/categories/jmh/</loc>
   </url>
 </urlset>
